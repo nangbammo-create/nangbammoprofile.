@@ -277,6 +277,22 @@
 
     .main-column, .side-column { display: grid; gap: 30px; align-content: start; }
 
+    /* NB-LAYOUT2: desktop - SP len dau, Nhan xet full-width ngang, About | Kinh nghiem 2 o */
+    @media (min-width: 861px) {
+      .content-grid { grid-template-columns: 1fr 1fr; }
+      .main-column, .side-column { display: contents; }
+      section[aria-labelledby="programTitle"] { order: 1; grid-column: 1 / -1; margin-top: 0; }
+      section[aria-labelledby="hlTitle"] { order: 2; grid-column: 1 / -1; }
+      section[aria-labelledby="aboutTitle"] { order: 3; grid-column: 1; }
+      section[aria-labelledby="experienceTitle"] { order: 4; grid-column: 2; }
+      #hlList { display: flex; flex-direction: row; align-items: stretch; }
+      body:not(.editing) #hlList { flex-wrap: nowrap; }
+      body:not(.editing) #hlList .hl-card { flex: 0 0 340px; }
+      body.editing #hlViewport { height: auto !important; }
+      body.editing #hlList { flex-wrap: wrap; }
+      body.editing #hlList .hl-card { flex: 1 1 300px; }
+    }
+
     .section {
       padding: clamp(24px, 4vw, 40px);
       border: 1px solid var(--line);
@@ -750,7 +766,7 @@
     .product-body { display:flex; flex-direction:column; gap:10px; padding:18px; flex:1; }
     .product-title { margin:0; font-size:1.02rem; letter-spacing:.02em; color:#0f3053; }
     .product-desc { margin:0; color:var(--ink-soft); font-size:.85rem; line-height:1.55; flex:1; }
-    .product-cta { display:inline-block; align-self:flex-start; margin-top:4px; padding:11px 28px; border-radius:999px; background:linear-gradient(120deg,#0d6b3f 0%,#e8830c 100%); color:#fff; font-weight:700; font-size:.9rem; letter-spacing:.01em; box-shadow:0 4px 14px rgba(13,107,63,.28); }
+    .product-cta { display:inline-block; align-self:center; margin-top:4px; padding:11px 28px; border-radius:999px; background:linear-gradient(120deg,#0d6b3f 0%,#e8830c 100%); color:#fff; font-weight:700; font-size:.9rem; letter-spacing:.01em; box-shadow:0 4px 14px rgba(13,107,63,.28); }
     .product-edit { display:none; padding:2px 14px 14px; }
     body.editing .product-edit { display:block; }
     .product-modal-toggle { display:flex; align-items:center; gap:8px; font-size:.8rem; color:var(--ink-soft); margin-top:10px; cursor:pointer; }
@@ -1091,7 +1107,7 @@
             <span class="product-body">
               <h4 class="product-title" data-editable>TÀI KHOẢN AI</h4>
               <p class="product-desc" data-editable>Tài khoản AI chính hãng, giá ưu đãi dành riêng cho cộng đồng.</p>
-              <span class="product-cta">Tham gia ngay →</span>
+              <span class="product-cta">Xem Bảng Giá Ưu Đãi</span>
             </span>
           </a>
           <label class="image-action" for="pdUp1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 7.5h3l1.5-2h7l1.5 2h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg><span>Đổi ảnh</span></label>
@@ -2171,7 +2187,8 @@
     (function () {
       'use strict';
       var PAIR_TIME = 6000;
-      var hlTimer = null, hlIdx = 0, hlStep = 0, hlGap = 0, hlPV = 2, hlInit = false;
+      var hlTimer = null, hlIdx = 0, hlStep = 0, hlStepX = 0, hlGap = 0, hlPV = 2, hlInit = false;
+      function hlIsH() { return window.innerWidth > 860; }
 
       function hlList() { return document.getElementById('hlList'); }
       function hlCards() { return Array.prototype.slice.call(document.querySelectorAll('#hlList > .hl-card:not(.hl-clone)')); }
@@ -2196,6 +2213,15 @@
         if (!list || !vp || cards.length < 2) return false;
         cards.forEach(function (c) { c.style.height = 'auto'; });
         list.querySelectorAll('.hl-clone').forEach(function (c) { c.style.height = 'auto'; });
+        if (hlIsH()) {
+          list.style.setProperty('--hl-h', 'auto');
+          var q0 = cards[0].getBoundingClientRect(), q1 = cards[1].getBoundingClientRect();
+          hlStepX = q1.left - q0.left;
+          if (hlStepX <= 0) return false;
+          hlPV = Math.max(1, Math.floor(vp.clientWidth / hlStepX));
+          vp.style.height = 'auto';
+          return true;
+        }
         var maxH = 0;
         cards.forEach(function (c) { maxH = Math.max(maxH, c.offsetHeight); });
         if (maxH <= 0) return false;
@@ -2206,27 +2232,19 @@
         if (hlStep <= 0) return false;
         hlPV = window.innerWidth <= 560 ? 1 : 2;
         vp.style.height = (hlPV * maxH + (hlPV - 1) * hlGap) + 'px';
-        if (window.innerWidth > 860) {
-          var aboutSec = document.querySelector('[aria-labelledby="aboutTitle"]');
-          var expSec = document.querySelector('[aria-labelledby="experienceTitle"]');
-          if (aboutSec && expSec) {
-            var targetH = aboutSec.offsetHeight + expSec.offsetHeight + 24;
-            if (targetH > 200) vp.style.height = targetH + 'px';
-          }
-        }
         return true;
       }
 
       function hlApply(idx, animate) {
         var list = hlList(); if (!list) return;
-        var y = -(idx * hlStep);
+        var t = hlIsH() ? 'translate(' + (-(idx * hlStepX)) + 'px,0)' : 'translateY(' + (-(idx * hlStep)) + 'px)';
         if (!animate) {
           list.style.transition = 'none';
-          list.style.transform = 'translateY(' + y + 'px)';
+          list.style.transform = t;
           void list.offsetHeight;
           list.style.transition = '';
         } else {
-          list.style.transform = 'translateY(' + y + 'px)';
+          list.style.transform = t;
         }
         hlIdx = idx;
       }
@@ -2235,8 +2253,9 @@
         if (document.body.classList.contains('editing')) return;
         if (document.hidden) return;
         var n = hlCards().length;
-        if (n <= hlPV || hlStep <= 0) return;
-        var next = hlIdx + hlPV;
+        var st = hlIsH() ? hlStepX : hlStep;
+        if (n <= hlPV || st <= 0) return;
+        var next = hlIdx + (hlIsH() ? 1 : hlPV);
         if (next > n) { hlApply(0, false); return; }
         hlApply(next, true);
       }
