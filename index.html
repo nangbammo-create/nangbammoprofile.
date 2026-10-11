@@ -559,6 +559,11 @@
       .avatar-initial { font-size: 3rem; }
       .contact-socials { grid-column: 1 / -1; justify-content: flex-start; }
       .content-grid { grid-template-columns: 1fr; }
+      .main-column, .side-column { display: contents; }
+      section[aria-labelledby="aboutTitle"] { order: 1; }
+      section[aria-labelledby="experienceTitle"] { order: 2; }
+      section[aria-labelledby="programTitle"] { order: 3; }
+      section[aria-labelledby="hlTitle"] { order: 4; }
     }
 
     @media (max-width: 560px) {
@@ -1266,9 +1271,11 @@
 
   <script>
     /* NB-SAVE: khôi phục bản đã lưu (chạy trước script chính của trang) */
+    window.NB_BUILD = '20261011g';
     try {
       var __nbSaved = localStorage.getItem('nangba-mmo-profile-v1');
-      if (__nbSaved) {
+      var __nbBuild = localStorage.getItem('nangba-mmo-profile-v1-build');
+      if (__nbSaved && __nbBuild === window.NB_BUILD) {
         var __bm = __nbSaved.match(/<body[^>]*>([\s\S]*)<\/body>/i);
         if (__bm) { document.body.innerHTML = __bm[1]; }
         var __bt = __nbSaved.match(/<body([^>]*)>/i);
@@ -1282,6 +1289,8 @@
         }
         var __tm = __nbSaved.match(/<title>([\s\S]*?)<\/title>/i);
         if (__tm) { document.title = __tm[1]; }
+      } else if (__nbSaved && !localStorage.getItem('nangba-mmo-profile-v1-backup')) {
+        try { localStorage.setItem('nangba-mmo-profile-v1-backup', __nbSaved); } catch (__be) {}
       }
     } catch (__e) {}
   </script>
@@ -1825,6 +1834,7 @@
           try {
             var html = '<!doctype html>\n' + clone.outerHTML;
             localStorage.setItem(KEY, html);
+            try { localStorage.setItem(KEY + '-build', window.NB_BUILD || ''); } catch (__se) {}
             if (!silent) nbToast('Đã lưu. Thoát ra mở lại vẫn còn nguyên.');
           } catch (e) {
             nbToast('Bộ nhớ trình duyệt đầy, không lưu được. Hãy dùng ảnh nhỏ hơn.');
